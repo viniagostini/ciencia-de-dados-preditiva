@@ -1,0 +1,41 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(here)
+theme_set(theme_bw())
+```
+
+```{r}
+dadosCEAP = read_csv("./dadosCEAP.csv")
+```
+
+## Pergunta 1: Quais são os deputados que gastaram mais dinheiro da CEAP? Quais são os mais econômicos?
+```{r}
+p1Dados <- dadosCEAP %>% group_by(nomeParlamentar) %>% 
+                        filter(valorLíquido > 0) %>% 
+                        summarise(valorLíquido = sum(valorLíquido)) %>% 
+                        arrange(desc(valorLíquido))
+
+topDeputadosGastadores <- p1Dados %>% head(10)
+topDeputadosEconomicos <- p1Dados %>% tail(10)
+
+
+topDeputadosGastadores %>%
+ggplot(aes(x=reorder(nomeParlamentar, -valorLíquido), y=valorLíquido, fill=factor(valorLíquido)))+
+  geom_bar(stat="identity", position="dodge")+
+  coord_flip() +
+  scale_fill_discrete(name = "Valor Gasto") +  
+  ylab("Valor líquido gasto da Cota Parlamentar (em R$)") +
+  xlab("Nome do Parlamentar") + 
+  ggtitle("Deputados que gastaram mais dinheiro da CEAP")
+```
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).

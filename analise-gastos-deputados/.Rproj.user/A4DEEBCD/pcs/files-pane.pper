@@ -1,0 +1,9 @@
+{
+    "path" : "~/workspace/ciencia-de-dados-preditiva/analise-gastos-deputados",
+    "sortOrder" : [
+        {
+            "ascending" : true,
+            "columnIndex" : 2
+        }
+    ]
+}

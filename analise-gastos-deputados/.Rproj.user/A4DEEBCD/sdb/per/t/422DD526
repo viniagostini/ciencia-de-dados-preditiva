@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1535552538641.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "422DD526",
+    "lastKnownWriteTime" : 0,
+    "last_content_update" : 1535552538641,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "D63745CD",
+        "caption" : "topDeputadosGastadores",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=topDeputadosGastadores&cache_key=D63745CD",
+        "displayedObservations" : 10,
+        "environment" : "",
+        "object" : "topDeputadosGastadores",
+        "preview" : 0,
+        "totalObservations" : 10,
+        "variables" : 2
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}
