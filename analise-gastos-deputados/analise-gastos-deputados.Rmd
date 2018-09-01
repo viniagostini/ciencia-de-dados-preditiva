@@ -55,4 +55,58 @@ ggplot(aes(x=reorder(nomeParlamentar, -valorLíquido), y=valorLíquido, fill=fac
 De maneira análoga aos que mais gastaram dinheiro da CEAP, selecionamos os 10 parlamentares que menos gastaram.  
 
 
+### Pergunta 2: Quais os estados cujos deputados gastam mais no exterior? Quais os estados cujos deputados gastam menos no exterior?
+
+```{r}
+dadosGastosExterior <- dadosCEAP %>% filter(tipoDocumento == 2)
+
+gastosExteriorPorParlamentar <- dadosGastosExterior %>% 
+                                group_by(nomeParlamentar, idCadastro) %>% 
+                                filter(valorLíquido > 0) %>% 
+                                summarise(valorLíquido = sum(valorLíquido), sgUF = first(sgUF))
+
+#está excluindo alguns estado. Não entendo porque.
+medianaDeGastoDeParlamentaresPorEstado <- gastosExteriorPorParlamentar %>% 
+                                          group_by(sgUF) %>% 
+                                          summarise(medianaValorLiquido = median(valorLíquido)) %>% arrange(desc(medianaValorLiquido))
+
+medianaDeGastoDeParlamentaresPorEstado %>%
+ggplot(aes(x=reorder(sgUF, -medianaValorLiquido), y=medianaValorLiquido, fill=factor(medianaValorLiquido)))+
+  geom_bar(stat="identity", position="dodge")+
+  coord_flip() +
+  scale_fill_discrete(name = "Valor Gasto") +  
+  ylab("Mediana dos gastos de parlamentares no exterior (em R$)") +
+  xlab("Estado") + 
+  ggtitle("Mediana de gastos de parlamentares no exterior por estado")
+```
+
+Para responder a essa pergunta, coletamos todos dos dados de gastos no exterior, agrupamos os gastos por parlamentar, ficando assim com os gastos de cada parlamentar no exterior, após isso, agrupamos esses dados por estado, calculando a mediana dos gastos de parlamentares no exterior por estado.  
+Ficamos assim com a mediana dos gastos de parlamentares no exterior por estado, essa é a informação exibida no gráfico acima, onde podemos ver todos os estados na ordem de quem gasta menos para quem gasta mais.
+
+### Pergunta 3: Quais os partidos cujos parlamentares mais usam CEAP no estado da Paraíba? Quais são os que menos usam?
+
+```{r}
+dadosDeGastosParaiba <- dadosCEAP %>% filter(sgUF == "PB")
+
+gastosParlamentaresPB <- dadosDeGastosParaiba %>% group_by(nomeParlamentar) %>% 
+                        filter(valorLíquido > 0) %>% 
+                        summarise(valorLíquido = sum(valorLíquido), sgPartido = first(sgPartido))
+
+medianaDeGastoDeParlamentaresPBPorPartido <- gastosParlamentaresPB %>% 
+                                          group_by(sgPartido) %>% 
+                                          summarise(medianaValorLiquido = median(valorLíquido)) %>% arrange(desc(medianaValorLiquido))
+
+medianaDeGastoDeParlamentaresPBPorPartido %>%
+ggplot(aes(x=reorder(sgPartido, -medianaValorLiquido), y=medianaValorLiquido, fill=factor(medianaValorLiquido)))+
+  geom_bar(stat="identity", position="dodge")+
+  coord_flip() +
+  scale_fill_discrete(name = "Valor Gasto") +  
+  ylab("Mediana dos gastos de parlamentares (em R$)") +
+  xlab("Partido") + 
+  ggtitle("Mediana de gastos de parlamentares por partido na Paraíba")
+```
+
+Aqui, coletamos todos os gastos de parlamentares da Paraíba, agrupamos os dados por parlamentar somando os gasto líquidos. Depois, agrupamos os parlmamentares por partidos, pegando a mediana de gastos de parlamentares. Assim, ficamos com a mediana de gastos de parlamentares por partidos na Paraíba.  
+Exibimos essa informação no gráfico acima na ordem de partidos que menos gastam aos que mais gastam.
+
 
