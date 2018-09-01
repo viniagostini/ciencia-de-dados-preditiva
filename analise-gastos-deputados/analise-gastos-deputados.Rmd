@@ -1,6 +1,8 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document: default
+  html_notebook: default
 ---
 
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
@@ -108,5 +110,46 @@ ggplot(aes(x=reorder(sgPartido, -medianaValorLiquido), y=medianaValorLiquido, fi
 
 Aqui, coletamos todos os gastos de parlamentares da Paraíba, agrupamos os dados por parlamentar somando os gasto líquidos. Depois, agrupamos os parlmamentares por partidos, pegando a mediana de gastos de parlamentares. Assim, ficamos com a mediana de gastos de parlamentares por partidos na Paraíba.  
 Exibimos essa informação no gráfico acima na ordem de partidos que menos gastam aos que mais gastam.
+
+## Pergunta 4: Quais os deputados que mais ultrapassam o limite de CEAP do seu estado?
+Para responder essa pergunta, usaremos dados de limites de CEAP.
+
+```{r}
+limitesCEAP <- read_csv("./limiteMensalCEAP.csv")
+
+
+gastosParlamentaresPorMes <- dadosCEAP %>%
+                             mutate(mes = format(dataEmissao, "%m"), ano = format(dataEmissao, "%Y")) %>%
+                             group_by(nomeParlamentar, idCadastro, mes, ano) %>%
+                             summarise(valorLíquido = sum(valorLíquido), sgUF = first(sgUF)) %>%
+                             filter(mes != "N/A" && ano != "N/A")
+
+
+gastosParlamentaresPorMes <- merge(gastosParlamentaresPorMes, limitesCEAP, by.x = "sgUF", by.y = "UF")
+
+numeroDeVezesQueCadaParlamentarPassouDaCota <- gastosParlamentaresPorMes %>%
+                                               group_by(nomeParlamentar, idCadastro) %>%
+                                               summarise(vezesAcimaDaCota = sum(valorLíquido > limite_mensal)) %>% arrange(desc(vezesAcimaDaCota))
+
+topParlamentaresAcimaDoLimite <- head(numeroDeVezesQueCadaParlamentarPassouDaCota, 10)
+parlamentaresQueNuncaPassaramDoLimite <- filter(numeroDeVezesQueCadaParlamentarPassouDaCota, vezesAcimaDaCota == 0)
+
+topParlamentaresAcimaDoLimite %>%
+ggplot(aes(x=reorder(nomeParlamentar, -vezesAcimaDaCota), y=vezesAcimaDaCota, fill=factor(vezesAcimaDaCota)))+
+  geom_bar(stat="identity", position="dodge")+
+  coord_flip() +
+  ylab("Numero de vezes que o parlamentar passou do limite de gastos") +
+  xlab("Parlamentar") + 
+  ggtitle("Top 10 parlamentares que mais extrapolaram o limite de gastos")
+```
+
+Para responder essa pergunta, primeiro precisamos da informação de quanto cada parlamentar gastou em cada mês. Para tal, agrupamos os dados por parlamentar, mês e ano, somando os gasto líquidos.  
+ 
+Com a informação de quanto cada parlamentar gastou em cada mês, contamos quantas vezes cada parlamentar extrapolou a cota e exibimos no gráfico acima.
+
+```{r}
+show(parlamentaresQueNuncaPassaramDoLimite)
+```
+Como temos muitos parlamentares que nunca extrapolaram o limite de gastos mensais, listamos aqui todos.
 
 
