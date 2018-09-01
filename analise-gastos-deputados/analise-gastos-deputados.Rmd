@@ -13,7 +13,12 @@ theme_set(theme_bw())
 dadosCEAP = read_csv("./dadosCEAP.csv")
 ```
 
-## Pergunta 1: Quais são os deputados que gastaram mais dinheiro da CEAP? Quais são os mais econômicos?
+Para essa análise usaremos dados de gastos de deputados utilizando a cota para o exrcício da atividade parlamentar (CEAP), que é uma cota única mensal destinada a custear os gastos dos deputados exclusivamente vinculados ao exercício da atividade parlamentar. Mais informações [aqui](http://www2.camara.leg.br/transparencia/acesso-a-informacao/copy_of_perguntas-frequentes/cota-para-o-exercicio-da-atividade-parlamentar).
+
+Ao longo da análise reponderemos 6 perguntas usando esses dados.
+
+
+### Pergunta 1: Quais são os deputados que gastaram mais dinheiro da CEAP? Quais são os mais econômicos?
 ```{r}
 p1Dados <- dadosCEAP %>% group_by(nomeParlamentar) %>% 
                         filter(valorLíquido > 0) %>% 
@@ -34,8 +39,20 @@ ggplot(aes(x=reorder(nomeParlamentar, -valorLíquido), y=valorLíquido, fill=fac
   ggtitle("Deputados que gastaram mais dinheiro da CEAP")
 ```
 
+Agrupando os dados por nome de parlamentar, somando os gastos líquidos de cada um e ordenando os parlamentares por total gasto, temos um ranking de quem gastou mais, desse ranking, o gráfico acima exibe os 10 parlamentares que mais gastaram dinheiro da CEAP.
+
+```{r}
+topDeputadosEconomicos %>%
+ggplot(aes(x=reorder(nomeParlamentar, -valorLíquido), y=valorLíquido, fill=factor(valorLíquido)))+
+  geom_bar(stat="identity", position="dodge")+
+  coord_flip() +
+  scale_fill_discrete(name = "Valor Gasto") +  
+  ylab("Valor líquido gasto da Cota Parlamentar (em R$)") +
+  xlab("Nome do Parlamentar") + 
+  ggtitle("Deputados que gastaram menos dinheiro da CEAP")
+```
+
+De maneira análoga aos que mais gastaram dinheiro da CEAP, selecionamos os 10 parlamentares que menos gastaram.  
 
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
