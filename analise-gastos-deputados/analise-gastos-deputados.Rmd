@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "Análise de Gastos de Deputados: Nossas Perguntas"
 output:
   html_document: default
   html_notebook: default
@@ -22,7 +22,7 @@ Ao longo da análise reponderemos 6 perguntas usando esses dados.
 
 ### Pergunta 1: Quais são os deputados que gastaram mais dinheiro da CEAP? Quais são os mais econômicos?
 ```{r}
-p1Dados <- dadosCEAP %>% group_by(nomeParlamentar) %>% 
+p1Dados <- dadosCEAP %>% group_by(nomeParlamentar, idCadastro) %>% 
                         filter(valorLíquido > 0) %>% 
                         summarise(valorLíquido = sum(valorLíquido)) %>% 
                         arrange(desc(valorLíquido))
@@ -67,7 +67,7 @@ gastosExteriorPorParlamentar <- dadosGastosExterior %>%
                                 filter(valorLíquido > 0) %>% 
                                 summarise(valorLíquido = sum(valorLíquido), sgUF = first(sgUF))
 
-#está excluindo alguns estado. Não entendo porque.
+#está excluindo alguns estados. Não entendo porque.
 medianaDeGastoDeParlamentaresPorEstado <- gastosExteriorPorParlamentar %>% 
                                           group_by(sgUF) %>% 
                                           summarise(medianaValorLiquido = median(valorLíquido)) %>% arrange(desc(medianaValorLiquido))
@@ -90,7 +90,7 @@ Ficamos assim com a mediana dos gastos de parlamentares no exterior por estado, 
 ```{r}
 dadosDeGastosParaiba <- dadosCEAP %>% filter(sgUF == "PB")
 
-gastosParlamentaresPB <- dadosDeGastosParaiba %>% group_by(nomeParlamentar) %>% 
+gastosParlamentaresPB <- dadosDeGastosParaiba %>% group_by(nomeParlamentar, idCadastro) %>% 
                         filter(valorLíquido > 0) %>% 
                         summarise(valorLíquido = sum(valorLíquido), sgPartido = first(sgPartido))
 
@@ -111,7 +111,7 @@ ggplot(aes(x=reorder(sgPartido, -medianaValorLiquido), y=medianaValorLiquido, fi
 Aqui, coletamos todos os gastos de parlamentares da Paraíba, agrupamos os dados por parlamentar somando os gasto líquidos. Depois, agrupamos os parlmamentares por partidos, pegando a mediana de gastos de parlamentares. Assim, ficamos com a mediana de gastos de parlamentares por partidos na Paraíba.  
 Exibimos essa informação no gráfico acima na ordem de partidos que menos gastam aos que mais gastam.
 
-## Pergunta 4: Quais os deputados que mais ultrapassam o limite de CEAP do seu estado?
+### Pergunta 4: Quais os deputados que mais ultrapassam o limite de CEAP do seu estado?
 Para responder essa pergunta, usaremos dados de limites de CEAP.
 
 ```{r}
@@ -147,9 +147,80 @@ Para responder essa pergunta, primeiro precisamos da informação de quanto cada
  
 Com a informação de quanto cada parlamentar gastou em cada mês, contamos quantas vezes cada parlamentar extrapolou a cota e exibimos no gráfico acima.
 
+
+### Pergunta 5: Quais estados cujos parlamentares gastam mais com passagens aéreas?
+
 ```{r}
-show(parlamentaresQueNuncaPassaramDoLimite)
+gastosComPassagensAereas <- dadosCEAP %>% filter(tipoDespesa == "PASSAGENS AÉREAS")
+
+gastosComPassagensAereasPorParlamentar <- gastosComPassagensAereas %>% 
+                                          filter(valorLíquido > 0) %>% 
+                                          group_by(nomeParlamentar, idCadastro) %>% 
+                                          summarise(valorLíquido = sum(valorLíquido), sgUF = first(sgUF))
+
+medianaDeGastoDeParlamentaresComPassagemPorEstado <- gastosComPassagensAereasPorParlamentar %>% 
+                                                     group_by(sgUF) %>% 
+                                                     summarise(medianaValorLiquido = median(valorLíquido)) %>% arrange(desc(medianaValorLiquido)) %>%
+                                                     filter(sgUF != "N/A")
+
+medianaDeGastoDeParlamentaresComPassagemPorEstado %>%
+ggplot(aes(x=reorder(sgUF, -medianaValorLiquido), y=medianaValorLiquido, fill=factor(medianaValorLiquido)))+
+  geom_bar(stat="identity", position="dodge")+
+  coord_flip() +
+  scale_fill_discrete(name = "Valor Gasto") +  
+  ylab("Mediana dos gastos de parlamentares em passagens aéreas (em R$)") +
+  xlab("Estado") + 
+  ggtitle("Mediana de gastos de parlamentares com passagens aéreas")
 ```
-Como temos muitos parlamentares que nunca extrapolaram o limite de gastos mensais, listamos aqui todos.
+
+No gŕafico acima temos a mediana dos gastos de parlamentares com passagens aérea por estado. Os valores estão ordenados dos que menos gastam aos que mais gastam.
 
 
+### Pergunta 6: Quais são os tipos de despesa mais utilizados no uso da CEAP pelos deputados do PT, PSDB e PMDB?
+
+
+Para responder a essa pergunta, coletamos os dados de gastos de cada um dos 3 partidos escolhidos e agrupamos por tipo de despensa, contando quantas vezes cada uma tinha sido utilizada, e o resultado foi esse:
+
+```{r fig.width=17, fig.height=10}
+gastosDeputadosPT <- dadosCEAP %>% filter(sgPartido == "PT")
+tiposDespesaDeputadosPT <- gastosDeputadosPT %>% group_by(tipoDespesa) %>% summarise(vezesQueOTipoDespesaFoiUsado = sum(valorLíquido > 0))
+
+gastosDeputadosPSDB <- dadosCEAP %>% filter(sgPartido == "PSDB")
+tiposDespesaDeputadosPSDB <- gastosDeputadosPSDB %>% group_by(tipoDespesa) %>% summarise(vezesQueOTipoDespesaFoiUsado = sum(valorLíquido > 0))
+
+gastosDeputadosPMDB <- dadosCEAP %>% filter(sgPartido == "PMDB")
+tiposDespesaDeputadosPMDB <- gastosDeputadosPMDB %>% group_by(tipoDespesa) %>% summarise(vezesQueOTipoDespesaFoiUsado = sum(valorLíquido > 0))
+
+tiposDespesaDeputadosPT %>%
+ggplot(aes(x=reorder(tipoDespesa, -vezesQueOTipoDespesaFoiUsado), y=vezesQueOTipoDespesaFoiUsado, fill=factor(vezesQueOTipoDespesaFoiUsado)))+
+  geom_bar(stat="identity", position="dodge")+
+  scale_fill_discrete(name = "") +  
+  ylab("Número de vezes que o tipo de despesa foi utilizado") +
+  xlab("Tipo de despesa") + 
+  ggtitle("Número de vezes que os Deputados do PT utilizaram a CEAP para cada tipo de despesa")+ 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r fig.width=17, fig.height=10}
+tiposDespesaDeputadosPMDB %>%
+ggplot(aes(x=reorder(tipoDespesa, -vezesQueOTipoDespesaFoiUsado), y=vezesQueOTipoDespesaFoiUsado, fill=factor(vezesQueOTipoDespesaFoiUsado)))+
+  geom_bar(stat="identity", position="dodge")+
+  scale_fill_discrete(name = "") +  
+  ylab("Número de vezes que o tipo de despesa foi utilizado") +
+  xlab("Tipo de despesa") + 
+  ggtitle("Número de vezes que os Deputados do PMDB utilizaram a CEAP para cada tipo de despesa")+ 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+
+```{r fig.width=17, fig.height=10}
+tiposDespesaDeputadosPSDB %>%
+ggplot(aes(x=reorder(tipoDespesa, -vezesQueOTipoDespesaFoiUsado), y=vezesQueOTipoDespesaFoiUsado, fill=factor(vezesQueOTipoDespesaFoiUsado)))+
+  geom_bar(stat="identity", position="dodge")+
+  scale_fill_discrete(name = "") +  
+  ylab("Número de vezes que o tipo de despesa foi utilizado") +
+  xlab("Tipo de despesa") + 
+  ggtitle("Número de vezes que os Deputados do PSDB utilizaram a CEAP para cada tipo de despesa")+ 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
