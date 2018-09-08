@@ -1,0 +1,47 @@
+---
+title: "Análise de Gastos de Deputados: Nossas Perguntas"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(here)
+theme_set(theme_bw())
+```
+
+```{r warning=FALSE, message=FALSE}
+dadosCEAP = read_csv("./dadosCEAP.csv")
+```
+
+Para essa análise usaremos dados de gastos de deputados utilizando a cota para o exrcício da atividade parlamentar (CEAP), que é uma cota única mensal destinada a custear os gastos dos deputados exclusivamente vinculados ao exercício da atividade parlamentar. Mais informações [aqui](http://www2.camara.leg.br/transparencia/acesso-a-informacao/copy_of_perguntas-frequentes/cota-para-o-exercicio-da-atividade-parlamentar).
+
+Ao longo da análise reponderemos 6 perguntas usando esses dados.
+
+### 1) Quais os meses em que os Parlamentares mais usam a CEAP?
+
+```{r}
+gastosParlamentaresPorMes <- dadosCEAP %>%
+                             mutate(mes = format(dataEmissao, "%m"), ano = format(dataEmissao, "%Y")) %>%
+                             group_by(nomeParlamentar, idCadastro, mes, ano) %>%
+                             summarise(valorLíquido = sum(valorLíquido), sgUF = first(sgUF)) %>%
+                             filter(mes != "N/A" && ano != "N/A") %>%
+                             filter(ano > 2014)
+
+medianaDeGastosPorMes <- gastosParlamentaresPorMes %>% group_by(mes, ano) %>% summarise(valorLíquido = median(valorLíquido)) %>% mutate(data = paste(mes, ano, sep="/"))
+
+medianaDeGastosPorMes %>%
+ggplot(aes(x=reorder(data, -valorLíquido), y=valorLíquido, fill=factor(valorLíquido)))+
+  geom_bar(stat="identity", position="dodge")+
+  coord_flip() +
+  ylab("Mediana dos gastos de parlamentares no mês (em R$)") +
+  xlab("Mês/Ano") + 
+  ggtitle("Meses em que a CEAP mais foi utilizada entre jan/2015 e set/2017") + theme(legend.position="none")
+```
+
+Para responder essa pergunta, decidimos utilizar a mediana de gastos de parlamentares em cada mês. Escolhemos essa medida, pois não importa quantos parlamentares estejam em exercício em cada mês, teremos uma comparação justa entre todos eles. Além disso, por usar a mediana, protegemos nossa análise da influência de outliers, tanto para um gasto alto quanti baixo.
+
+Outra decisão que tomamos foi de descartar os dados de 2014, pois não tínhamos muitos dados desse ano e verificamos que o que temos na base de dados não corresponde aos gastos reais nos messes desse ano.
+
+Assim, ficamos com os resultados do gŕafico acima, onde dispomos os resultados ordenamos por meses que o gasto foi maior até os que o gasto foi maior.

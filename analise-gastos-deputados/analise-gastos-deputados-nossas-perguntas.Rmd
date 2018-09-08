@@ -11,7 +11,7 @@ library(here)
 theme_set(theme_bw())
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 dadosCEAP = read_csv("./dadosCEAP.csv")
 ```
 
