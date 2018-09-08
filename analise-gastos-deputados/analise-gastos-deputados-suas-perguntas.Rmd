@@ -1,5 +1,5 @@
 ---
-title: "Análise de Gastos de Deputados: Nossas Perguntas"
+title: "Análise de Gastos de Deputados: Suas Perguntas"
 output:
   html_document: default
   html_notebook: default
@@ -17,7 +17,7 @@ dadosCEAP = read_csv("./dadosCEAP.csv")
 
 Para essa análise usaremos dados de gastos de deputados utilizando a cota para o exrcício da atividade parlamentar (CEAP), que é uma cota única mensal destinada a custear os gastos dos deputados exclusivamente vinculados ao exercício da atividade parlamentar. Mais informações [aqui](http://www2.camara.leg.br/transparencia/acesso-a-informacao/copy_of_perguntas-frequentes/cota-para-o-exercicio-da-atividade-parlamentar).
 
-Ao longo da análise reponderemos 6 perguntas usando esses dados.
+Ao longo da análise reponderemos 2 perguntas usando esses dados.
 
 ### 1) Quais os meses em que os Parlamentares mais usam a CEAP?
 
@@ -45,3 +45,29 @@ Para responder essa pergunta, decidimos utilizar a mediana de gastos de parlamen
 Outra decisão que tomamos foi de descartar os dados de 2014, pois não tínhamos muitos dados desse ano e verificamos que o que temos na base de dados não corresponde aos gastos reais nos messes desse ano.
 
 Assim, ficamos com os resultados do gŕafico acima, onde dispomos os resultados ordenamos por meses que o gasto foi maior até os que o gasto foi maior.
+
+
+### Quais os Parlamentares que mais gastaram com passagens aéreas em um único mês?
+
+```{r}
+gastosParlamentaresComPassagemAereaPorMes <- dadosCEAP %>%
+                                             mutate(mes = format(dataEmissao, "%m"), ano = format(dataEmissao, "%Y")) %>%
+                                             group_by(nomeParlamentar, idCadastro, mes, ano, tipoDespesa) %>%
+                                             summarise(valorLíquido = sum(valorLíquido)) %>%
+                                             filter(mes != "N/A" && ano != "N/A") %>%
+                                             mutate(data = paste(mes, ano, sep="/")) %>% mutate(parlamentarData = paste(nomeParlamentar, data, sep=" - ")) %>%
+                                             filter(ano > 2014) %>% filter(tipoDespesa == "PASSAGENS AÉREAS") %>% arrange(desc(valorLíquido))
+
+
+gastosParlamentaresComPassagemAereaPorMes %>%
+head(10) %>%
+ggplot(aes(x=reorder(parlamentarData, -valorLíquido), y=valorLíquido, fill=factor(valorLíquido)))+
+  geom_bar(stat="identity", position="dodge")+
+  coord_flip() +
+  ylab("Valor gasto com passagens aéreas em um único mês (em R$)") +
+  xlab("Parlamentar - Mês/Ano") + 
+  ggtitle("Top 10 parlamentares que mais usaram a CEAP com passagens aéreas em um mês") + theme(legend.position="none")
+```
+
+Aqui, nosso objetivo foi calcular quanto cada deputados gastou com passagens aereas em cada mês e coletar os 10 maiores valores.
+Para tal, agrupamos os gastos dos parlamentares por ano, mês e tipo de despesa, calculando o valor total gasto. Após isso, filtramos apenas os valores gastos com passagens aéreas, coletamos os 10 maiores gastos e plotamos no gŕafico acima.
