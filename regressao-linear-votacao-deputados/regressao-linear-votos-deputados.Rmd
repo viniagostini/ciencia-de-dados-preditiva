@@ -1,6 +1,9 @@
 ---
 title: "Usando Regressão Linear para Explicar a votação de Deputados"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
@@ -161,8 +164,134 @@ Em ambos os casos vemos que se formos quantificar a simetria dos pontos em rela�
 Isso confirma os valores que observamos de **R-quadrado ajustado** e **RSE** na questão anterior para os anos de 2006 e 2010, tendo o modelo de 2006 ligeiramente mais preciso que o de 2010.
 
 
-### Pergunta 3: Todas as variáveis são úteis para os modelos de regressão? Há variáveis redudantes? Faça análises para 2006 e 2010 separadamente. 
+## Pergunta 3: Todas as variáveis são úteis para os modelos de regressão? Há variáveis redudantes? Faça análises para 2006 e 2010 separadamente. 
 
 Para verificar se de fato todas as variáveis contribuem significativamente para o modelo, vamos observar a correlação entre elas, dessa forma, se duas ou mais variáveis possuirem um alto coeficiente de correlação entre si, isso significa que apenas uma delas está sendo relevante para o modelo.
 
+#### Correlograma para 2006
+```{r}
+dadosRegressao2006 %>% 
+  select(-ano, -sequencial_candidato.dummy, -nome.dummy, -uf.dummy, -partido.dummy, -cargo.dummy, -sexo.dummy, -grau.dummy, -estado_civil.dummy, -ocupacao.dummmy) %>% 
+  cor() %>% 
+  corrplot(
+    method = "number",
+    type = "full",
+    tl.srt = 20,
+    tl.col = "black",
+    tl.cex = 0.6,
+    tl.offset = 0.5,
+    number.cex = 0.70,
+    na.label = "NA"
+  )
+```
 
+
+#### Correlograma para 2010
+```{r}
+dadosRegressao2010 %>% 
+  select(-ano, -sequencial_candidato.dummy, -nome.dummy, -uf.dummy, -partido.dummy, -cargo.dummy, -sexo.dummy, -grau.dummy, -estado_civil.dummy, -ocupacao.dummmy) %>% 
+  cor() %>% 
+  corrplot(
+    method = "number",
+    type = "full",
+    tl.srt = 20,
+    tl.col = "black",
+    tl.cex = 0.6,
+    tl.offset = 0.5,
+    number.cex = 0.70,
+    na.label = "NA"
+  )
+```
+
+Podemos observar que em ambos os modelos (2006 e 2010) temos variáveis com um coeficiente de correlacão linear bem alto, o que é um bom indício que podemos cortar algumas variáveis do nosso modelo.
+
+
+## Pergunta 4: No caso de haver variáveis pouco explicativas e/ou redudantes, construa um novo modelo sem essas variáveis e o compare ao modelo com todas as variáveis (e.g. em termos de R2 e RSE). Faça isso para 2006 e 2010 separadamente. 
+
+#### Para 2006:
+
+A ideia aqui foi verificar coeficientes de correlação acima de 0.6 ou abaixo de -0.6 e eliminar uma das variáveis do modelo. 
+```{r}
+dadosAjustados2006 <- dadosRegressao2006 %>% 
+  select(- quantidade_doadores, - recursos_de_pessoas_juridicas, - quantidade_despesas, -quantidade_fornecedores, - total_despesa, -recursos_de_partido_politico, - media_despesa, -media_receita, - recursos_de_pessoas_fisicas, recursos_de_outros_candidatos.comites) %>%
+  select(-ano, -sequencial_candidato.dummy, -nome.dummy, -uf.dummy, -partido.dummy, -cargo.dummy, -sexo.dummy, -grau.dummy, -estado_civil.dummy, -ocupacao.dummmy)
+
+dadosAjustados2006 %>%
+  cor() %>% 
+  corrplot(
+    method = "number",
+    type = "full",
+    tl.srt = 20,
+    tl.col = "black",
+    tl.cex = 0.7,
+    tl.offset = 0.5,
+    number.cex = 0.70,
+    na.label = "NA"
+  )
+  
+```
+
+Ficamos então com o seguinte modelo:
+
+```{r}
+modeloAjustado2006 <- lm(formula = votos ~ ., dadosAjustados2006, na.action = na.omit)
+
+summary(modeloAjustado2006)
+```
+
+Conseguimos enxugar bastante o modelo sem perder muito do que ele explica.
+
+
+#### Para 2010
+
+Faremos de forma análoga para 2010:
+
+```{r}
+dadosAjustados2010 <- dadosRegressao2010 %>% 
+  select(- quantidade_doadores, - recursos_de_pessoas_juridicas, - quantidade_despesas, -quantidade_fornecedores, - total_despesa, -recursos_de_partido_politico, - media_despesa, -media_receita, - recursos_de_pessoas_fisicas, recursos_de_outros_candidatos.comites) %>%
+  select(-ano, -sequencial_candidato.dummy, -nome.dummy, -uf.dummy, -partido.dummy, -cargo.dummy, -sexo.dummy, -grau.dummy, -estado_civil.dummy, -ocupacao.dummmy)
+
+dadosAjustados2010 %>%
+  cor() %>% 
+  corrplot(
+    method = "number",
+    type = "full",
+    tl.srt = 20,
+    tl.col = "black",
+    tl.cex = 0.7,
+    tl.offset = 0.5,
+    number.cex = 0.70,
+    na.label = "NA"
+  )
+```
+
+```{r}
+modeloAjustado2010 <- lm(formula = votos ~ ., dadosAjustados2010, na.action = na.omit)
+
+summary(modeloAjustado2010)
+```
+
+Da mesma forma, conseguimos enxugar bastante o modelo, sem que hovesse uma perdar muito grande do quanto ele explica.
+
+## Pergunta 5: Construa agora uma regressão considerando os anos 2006 e 2010 em conjunto. Que diferenças/semelhanças você percebe em relação aos modelos individuais por ano? Veja a questão 2 para sugestões que você usar para comparação.
+```{r}
+dados2006_2010$sequencial_candidato.dummy <- dummyfy(dados2006_2010$sequencial_candidato)
+dados2006_2010$nome.dummy <- dummyfy(dados2006_2010$nome)
+dados2006_2010$uf.dummy <- dummyfy(dados2006_2010$uf)
+dados2006_2010$partido.dummy <- dummyfy(dados2006_2010$partido)
+dados2006_2010$cargo.dummy <- dummyfy(dados2006_2010$cargo)
+dados2006_2010$sexo.dummy <- dummyfy(dados2006_2010$sexo)
+dados2006_2010$grau.dummy <- dummyfy(dados2006_2010$grau)
+dados2006_2010$estado_civil.dummy <- dummyfy(dados2006_2010$estado_civil)
+dados2006_2010$ocupacao.dummmy <- dummyfy(dados2006_2010$ocupacao)
+
+dadosRegressao2006_2010 <- 
+  dados2006_2010 %>%
+  select(-sequencial_candidato, -nome, -uf, -partido, -cargo, -sexo, -grau, -estado_civil, -ocupacao)
+
+modeloCandidatos2006_2010 <- lm(formula = votos ~ ., dadosRegressao2006_2010, na.action = na.omit)
+
+summary(modeloCandidatos2006_2010)
+```
+
+Vemos que apesar de conter mais dados, o modelo utilizando dados de 2006 e 2010 consegue explicar menos dos votos do que o modelo considerando apenas 2006.
